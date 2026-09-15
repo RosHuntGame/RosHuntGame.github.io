@@ -278,6 +278,36 @@
 
   .finish-bar{ margin-top: 18px; }
 
+  .current-task-card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 30px 20px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+  }
+
+  .current-task-emoji{ font-size: 64px; }
+
+  .current-task-text{
+    font-family:'Baloo 2', sans-serif;
+    font-size: 21px;
+    color: var(--forest-dark);
+    line-height:1.35;
+  }
+
+  .current-task-actions{
+    display:flex;
+    gap:10px;
+    width:100%;
+    margin-top:6px;
+  }
+
+  .current-task-actions .btn{ flex:1; }
+
   /* ---------- COMPLETE SCREEN ---------- */
 
   .complete-hero{
@@ -412,19 +442,26 @@
         <li>Przy każdym zadaniu naciśnij 📸 i zrób zdjęcie znalezionej rzeczy.</li>
         <li>Zbierz wszystkie 10 zdjęć, żeby zostać Mistrzem Tropicieli!</li>
       </ol>
-      <button class="btn btn-ghost" style="margin-top:14px; width:100%;" onclick="speakText('Rozejrzyj się dookoła. Przy każdym zadaniu naciśnij aparat i zrób zdjęcie znalezionej rzeczy. Zbierz wszystkie dziesięć zdjęć, żeby zostać Mistrzem Tropicieli!')">🔊 Posłuchaj zasad</button>
+      <button class="btn btn-ghost" id="rules-btn" style="margin-top:14px; width:100%;" onclick="toggleRulesSpeech()">🔊 Posłuchaj zasad</button>
     </div>
 
     <div class="cta-wrap">
-      <button class="btn btn-primary" onclick="startGame()">🚀 Zacznij podchody</button>
-      <button class="btn btn-ghost" onclick="reshuffleAndStart()">🔀 Wylosuj nową listę</button>
+      <button class="btn btn-primary" onclick="goToTaskListPreview()">🚀 Zacznij podchody</button>
+      <button class="btn btn-ghost" onclick="reshuffleToPreview()">🔀 Wylosuj nową listę</button>
     </div>
   </section>
 
-  <!-- GAME -->
-  <section class="screen" id="screen-game">
+  <!-- TASK LIST PREVIEW -->
+  <section class="screen" id="screen-tasklist">
+    <button class="btn btn-primary" style="margin-bottom:18px;" onclick="beginPlay()">🚀 START</button>
+    <h2 style="font-size:19px; color:var(--forest); margin-bottom:12px;">Lista zadań</h2>
+    <div class="task-list" id="preview-task-list"></div>
+  </section>
+
+  <!-- PLAY (jedno zadanie na raz) -->
+  <section class="screen" id="screen-play">
     <div class="topbar">
-      <h2 style="font-size:19px; color:var(--forest);">Twoje tropy</h2>
+      <h2 style="font-size:19px; color:var(--forest);">Twój trop</h2>
       <div class="timer" id="timer">00:00</div>
     </div>
 
@@ -436,7 +473,7 @@
       <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
 
-    <div class="task-list" id="task-list"></div>
+    <div id="current-task-card"></div>
 
     <div class="finish-bar">
       <button class="btn btn-ghost" onclick="goHome(true)">⏸ Przerwij grę</button>
@@ -459,7 +496,7 @@
     <div class="summary-grid" id="summary-grid"></div>
 
     <div class="cta-wrap">
-      <button class="btn btn-primary" onclick="reshuffleAndStart()">🔁 Zagraj jeszcze raz</button>
+      <button class="btn btn-primary" onclick="reshuffleToPreview()">🔁 Zagraj jeszcze raz</button>
       <button class="btn btn-ghost" onclick="goHome(false)">🏠 Wróć do startu</button>
     </div>
   </section>
@@ -538,6 +575,40 @@
     window.speechSynthesis.speak(utter);
   }
 
+  const RULES_TEXT = 'Rozejrzyj się dookoła. Przy każdym zadaniu naciśnij aparat i zrób zdjęcie znalezionej rzeczy. Zbierz wszystkie dziesięć zdjęć, żeby zostać Mistrzem Tropicieli!';
+  let rulesState = 'idle'; // idle | playing | paused
+
+  function setRulesButtonLabel(html){
+    document.getElementById('rules-btn').innerHTML = html;
+  }
+
+  function toggleRulesSpeech(){
+    if(!('speechSynthesis' in window)) return;
+
+    if(rulesState === 'idle'){
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(RULES_TEXT);
+      utter.lang = 'pl-PL';
+      utter.rate = 0.9;
+      utter.onend = () => {
+        rulesState = 'idle';
+        setRulesButtonLabel('🔊 Posłuchaj zasad');
+        goToTaskListPreview();
+      };
+      window.speechSynthesis.speak(utter);
+      rulesState = 'playing';
+      setRulesButtonLabel('⏸ Pauza');
+    } else if(rulesState === 'playing'){
+      window.speechSynthesis.pause();
+      rulesState = 'paused';
+      setRulesButtonLabel('▶ Wznów');
+    } else if(rulesState === 'paused'){
+      window.speechSynthesis.resume();
+      rulesState = 'playing';
+      setRulesButtonLabel('⏸ Pauza');
+    }
+  }
+
   function replayTask(taskId){
     const task = tasks.find(t => t.id === taskId);
     if(task) speakText(`Znajdź: ${task.text}`);
@@ -550,21 +621,23 @@
     }
   }
 
-  function startGame(){
+  function goToTaskListPreview(){
     if(tasks.length === 0) tasks = buildTasks();
-    renderTasks();
-    updateProgress();
-    startTimer();
-    showScreen('screen-game');
-    setTimeout(announceNextTask, 500);
+    renderPreviewList();
+    showScreen('screen-tasklist');
   }
 
-  function reshuffleAndStart(){
+  function reshuffleToPreview(){
     tasks = buildTasks();
-    renderTasks();
+    renderPreviewList();
+    showScreen('screen-tasklist');
+  }
+
+  function beginPlay(){
     updateProgress();
     startTimer();
-    showScreen('screen-game');
+    renderCurrentTaskCard();
+    showScreen('screen-play');
     setTimeout(announceNextTask, 500);
   }
 
@@ -599,33 +672,41 @@
     document.getElementById('timer').textContent = formatTime(secondsElapsed);
   }
 
-  function renderTasks(){
-    const list = document.getElementById('task-list');
+  function renderPreviewList(){
+    const list = document.getElementById('preview-task-list');
     list.innerHTML = '';
     tasks.forEach(task => {
       const el = document.createElement('div');
-      el.className = 'task' + (task.done ? ' done' : '');
+      el.className = 'task';
       el.innerHTML = `
         <div class="task-emoji">${task.emoji}</div>
         <div class="task-body">
           <div class="task-text">${task.text}</div>
-          <div class="task-sub">${task.done ? 'Znalezione! ✅' : 'Nieodkryte jeszcze'}</div>
-        </div>
-        <div class="task-action">
-          ${task.done
-            ? `<div class="thumb-wrap"><img src="${task.photoUrl}"><div class="thumb-check">✔️</div></div>`
-            : `<div class="task-actions-row">
-                 <button class="speak-btn" onclick="replayTask(${task.id})">🔊</button>
-                 <button class="snap-btn" onclick="triggerCamera(${task.id})">📸</button>
-               </div>`
-          }
+          <div class="task-sub">Do znalezienia</div>
         </div>
       `;
       list.appendChild(el);
     });
   }
 
+  function renderCurrentTaskCard(){
+    const container = document.getElementById('current-task-card');
+    const current = tasks.find(t => !t.done);
+    if(!current){ container.innerHTML = ''; return; }
+    container.innerHTML = `
+      <div class="current-task-card">
+        <div class="current-task-emoji">${current.emoji}</div>
+        <div class="current-task-text">${current.text}</div>
+        <div class="current-task-actions">
+          <button class="btn btn-ghost" onclick="announceNextTask()">🔊 Posłuchaj</button>
+          <button class="btn btn-primary" onclick="triggerCamera(${current.id})">📸 Zdjęcie</button>
+        </div>
+      </div>
+    `;
+  }
+
   function triggerCamera(taskId){
+    if('speechSynthesis' in window) window.speechSynthesis.cancel();
     activeTaskIndex = taskId;
     document.getElementById('camera-input').click();
   }
@@ -663,7 +744,7 @@
     pendingPhotoUrl = null;
     activeTaskIndex = null;
 
-    renderTasks();
+    renderCurrentTaskCard();
     updateProgress();
     burstConfetti();
 
