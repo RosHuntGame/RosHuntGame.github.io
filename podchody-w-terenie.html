@@ -247,6 +247,19 @@
     cursor:pointer;
   }
 
+  .task-actions-row{ display:flex; gap:6px; flex-shrink:0; }
+
+  .speak-btn{
+    background: var(--sky);
+    color:#fff;
+    border:none;
+    border-radius: 12px;
+    padding: 9px 10px;
+    font-size: 20px;
+    line-height:1;
+    cursor:pointer;
+  }
+
   .thumb-wrap{
     width:46px; height:46px;
     border-radius:12px;
@@ -399,6 +412,7 @@
         <li>Przy każdym zadaniu naciśnij 📸 i zrób zdjęcie znalezionej rzeczy.</li>
         <li>Zbierz wszystkie 10 zdjęć, żeby zostać Mistrzem Tropicieli!</li>
       </ol>
+      <button class="btn btn-ghost" style="margin-top:14px; width:100%;" onclick="speakText('Rozejrzyj się dookoła. Przy każdym zadaniu naciśnij aparat i zrób zdjęcie znalezionej rzeczy. Zbierz wszystkie dziesięć zdjęć, żeby zostać Mistrzem Tropicieli!')">🔊 Posłuchaj zasad</button>
     </div>
 
     <div class="cta-wrap">
@@ -515,12 +529,34 @@
     document.getElementById(id).classList.add('active');
   }
 
+  function speakText(text){
+    if(!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'pl-PL';
+    utter.rate = 0.9;
+    window.speechSynthesis.speak(utter);
+  }
+
+  function replayTask(taskId){
+    const task = tasks.find(t => t.id === taskId);
+    if(task) speakText(`Znajdź: ${task.text}`);
+  }
+
+  function announceNextTask(){
+    const next = tasks.find(t => !t.done);
+    if(next){
+      speakText(`Znajdź: ${next.text}`);
+    }
+  }
+
   function startGame(){
     if(tasks.length === 0) tasks = buildTasks();
     renderTasks();
     updateProgress();
     startTimer();
     showScreen('screen-game');
+    setTimeout(announceNextTask, 500);
   }
 
   function reshuffleAndStart(){
@@ -529,6 +565,7 @@
     updateProgress();
     startTimer();
     showScreen('screen-game');
+    setTimeout(announceNextTask, 500);
   }
 
   function goHome(keepProgress){
@@ -577,7 +614,10 @@
         <div class="task-action">
           ${task.done
             ? `<div class="thumb-wrap"><img src="${task.photoUrl}"><div class="thumb-check">✔️</div></div>`
-            : `<button class="snap-btn" onclick="triggerCamera(${task.id})">📸</button>`
+            : `<div class="task-actions-row">
+                 <button class="speak-btn" onclick="replayTask(${task.id})">🔊</button>
+                 <button class="snap-btn" onclick="triggerCamera(${task.id})">📸</button>
+               </div>`
           }
         </div>
       `;
@@ -591,15 +631,6 @@
   }
 
   let pendingPhotoUrl = null;
-
-  function speakText(text){
-    if(!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'pl-PL';
-    utter.rate = 0.95;
-    window.speechSynthesis.speak(utter);
-  }
 
   document.getElementById('camera-input').addEventListener('change', function(e){
     const file = e.target.files[0];
@@ -620,7 +651,9 @@
       // Odrzucone zdjęcie — nie zapisujemy go, dziecko może spróbować jeszcze raz.
       URL.revokeObjectURL(pendingPhotoUrl);
       pendingPhotoUrl = null;
+      const retryTask = tasks.find(t => t.id === activeTaskIndex);
       activeTaskIndex = null;
+      if(retryTask) setTimeout(() => speakText(`Spróbuj jeszcze raz. Znajdź: ${retryTask.text}`), 300);
       return;
     }
 
@@ -636,6 +669,8 @@
 
     if(tasks.every(t => t.done)){
       setTimeout(showComplete, 500);
+    } else {
+      setTimeout(announceNextTask, 700);
     }
   }
 
@@ -659,6 +694,7 @@
       grid.appendChild(img);
     });
     showScreen('screen-complete');
+    setTimeout(() => speakText('Brawo! Jesteś Mistrzem Tropicieli! Znalazłeś wszystkie dziesięć rzeczy.'), 400);
   }
 
   function burstConfetti(){
