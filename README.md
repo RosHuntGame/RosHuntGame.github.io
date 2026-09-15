@@ -1,1 +1,679 @@
-# RosHuntGame.github.io
+[podchody-w-terenie_1.html](https://github.com/user-attachments/files/32232546/podchody-w-terenie_1.html)
+# RosHuntGame.github.io<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Tropiciele — gra terenowa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream: #FBF6E9;
+    --forest: #2F5233;
+    --forest-dark: #1F3A23;
+    --amber: #F2A93B;
+    --amber-dark: #D98F1F;
+    --bark: #6B4226;
+    --sky: #5FA8A3;
+    --card: #FFFFFF;
+    --line: #E4DCC4;
+    --radius: 20px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    background: var(--cream);
+    font-family: 'Nunito', sans-serif;
+    color: var(--forest-dark);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body{
+    min-height: 100vh;
+    display:flex;
+    justify-content:center;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(95,168,163,0.10) 0, transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(242,169,59,0.14) 0, transparent 40%);
+  }
+
+  .app{
+    width:100%;
+    max-width: 480px;
+    min-height:100vh;
+    padding: 18px 16px 40px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  h1, h2, h3{ font-family:'Baloo 2', sans-serif; margin:0; }
+
+  .screen{ display:none; flex-direction:column; flex:1; animation: fadein .35s ease; }
+  .screen.active{ display:flex; }
+
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- HOME SCREEN ---------- */
+
+  .home-hero{
+    background: var(--forest);
+    border-radius: var(--radius);
+    padding: 28px 22px 24px;
+    color: var(--cream);
+    position:relative;
+    overflow:hidden;
+  }
+
+  .home-hero::after{
+    content:"";
+    position:absolute;
+    right:-30px; bottom:-40px;
+    width:160px; height:160px;
+    background: radial-gradient(circle, rgba(242,169,59,0.35), transparent 70%);
+  }
+
+  .badge-row{
+    display:flex;
+    gap:8px;
+    font-size:26px;
+    margin-bottom:10px;
+  }
+
+  .home-hero h1{
+    font-size: 30px;
+    line-height:1.15;
+    color:#fff;
+  }
+
+  .home-hero p{
+    margin: 10px 0 0;
+    color: rgba(251,246,233,0.85);
+    font-size: 15px;
+    line-height:1.5;
+    max-width: 34ch;
+  }
+
+  .stat-strip{
+    display:flex;
+    gap:10px;
+    margin-top:22px;
+  }
+
+  .stat-chip{
+    background: rgba(251,246,233,0.12);
+    border: 1px solid rgba(251,246,233,0.25);
+    border-radius: 14px;
+    padding: 10px 12px;
+    flex:1;
+  }
+
+  .stat-chip .num{ font-family:'Baloo 2', sans-serif; font-size:20px; color: var(--amber); display:block; }
+  .stat-chip .lbl{ font-size:11.5px; color: rgba(251,246,233,0.75); }
+
+  .rules{
+    margin-top:20px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 18px 16px;
+  }
+
+  .rules h3{ font-size:16px; color:var(--forest); margin-bottom:10px; }
+
+  .rules ol{ margin:0; padding-left: 20px; }
+  .rules li{ font-size:14.5px; line-height:1.65; color:#3d3d3d; }
+  .rules li::marker{ color: var(--amber-dark); font-weight:700; }
+
+  .btn{
+    border:none;
+    cursor:pointer;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:17px;
+    border-radius: 999px;
+    padding: 16px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{ transform: scale(0.97); }
+
+  .btn-primary{
+    background: var(--amber);
+    color: var(--forest-dark);
+    box-shadow: 0 6px 0 var(--amber-dark);
+  }
+  .btn-primary:active{ box-shadow: 0 3px 0 var(--amber-dark); }
+
+  .btn-ghost{
+    background: transparent;
+    color: var(--forest);
+    border: 2px solid var(--line);
+  }
+
+  .cta-wrap{ margin-top:22px; display:flex; flex-direction:column; gap:10px; }
+
+  /* ---------- GAME SCREEN ---------- */
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+
+  .timer{
+    font-family:'Baloo 2', sans-serif;
+    font-size:15px;
+    background: var(--card);
+    border:1px solid var(--line);
+    padding:6px 12px;
+    border-radius:999px;
+    color: var(--forest);
+  }
+
+  .progress-wrap{ margin-bottom: 16px; }
+
+  .progress-label{
+    display:flex; justify-content:space-between;
+    font-size:13px; color:var(--bark); margin-bottom:6px;
+    font-weight:700;
+  }
+
+  .progress-track{
+    height: 14px;
+    background: var(--line);
+    border-radius: 999px;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, var(--sky), var(--forest));
+    border-radius:999px;
+    transition: width .4s ease;
+  }
+
+  .task-list{ display:flex; flex-direction:column; gap:12px; }
+
+  .task{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    transition: background .2s ease, border-color .2s ease;
+  }
+
+  .task.done{
+    background: #F1F8EE;
+    border-color: #BFE0AE;
+  }
+
+  .task-emoji{
+    font-size: 26px;
+    width:46px; height:46px;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--cream);
+    border-radius: 12px;
+    flex-shrink:0;
+  }
+
+  .task-body{ flex:1; min-width:0; }
+
+  .task-text{ font-size:14.5px; font-weight:700; color:#2b2b2b; line-height:1.35; }
+
+  .task-sub{ font-size:12px; color:#8a8a8a; margin-top:2px; }
+
+  .task-action{ flex-shrink:0; }
+
+  .snap-btn{
+    background: var(--forest);
+    color:#fff;
+    border:none;
+    border-radius: 12px;
+    padding: 9px 10px;
+    font-size: 20px;
+    line-height:1;
+    cursor:pointer;
+  }
+
+  .thumb-wrap{
+    width:46px; height:46px;
+    border-radius:12px;
+    overflow:hidden;
+    border: 2px solid #7FBF6A;
+    position:relative;
+    flex-shrink:0;
+  }
+  .thumb-wrap img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .thumb-check{
+    position:absolute; inset:0;
+    background: rgba(47,82,51,0.28);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:20px;
+  }
+
+  .finish-bar{ margin-top: 18px; }
+
+  /* ---------- COMPLETE SCREEN ---------- */
+
+  .complete-hero{
+    text-align:center;
+    padding: 10px 6px 6px;
+  }
+
+  .complete-hero .big-emoji{ font-size:56px; }
+
+  .complete-hero h2{ font-size:24px; color:var(--forest); margin-top:6px; }
+  .complete-hero p{ color:#5c5c5c; font-size:14.5px; margin-top:6px; }
+
+  .summary-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:8px;
+    margin-top:20px;
+  }
+
+  .summary-grid img{
+    width:100%; aspect-ratio:1/1;
+    object-fit:cover;
+    border-radius:12px;
+    border: 1px solid var(--line);
+  }
+
+  .summary-stats{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+  }
+
+  .summary-stats .stat-chip{
+    background: var(--forest);
+  }
+  .summary-stats .stat-chip .num{ color: var(--amber); }
+  .summary-stats .stat-chip .lbl{ color: rgba(251,246,233,0.8); }
+
+  input[type=file]{ display:none; }
+
+  .confetti-piece{
+    position:fixed;
+    top:-10px;
+    width:9px; height:14px;
+    border-radius:2px;
+    pointer-events:none;
+    z-index:999;
+    animation: fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform: translateY(110vh) rotate(540deg); opacity:0.9; }
+  }
+
+  /* ---------- CONFIRM MODAL ---------- */
+
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background: rgba(31,58,35,0.55);
+    z-index: 1000;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .modal-overlay.active{ display:flex; }
+
+  .modal-card{
+    width:100%;
+    max-width: 480px;
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    padding: 20px 18px 26px;
+    animation: slideup .25s ease;
+  }
+
+  @keyframes slideup{ from{ transform: translateY(30px); opacity:0; } to{ transform: translateY(0); opacity:1; } }
+
+  .modal-photo{
+    width:100%;
+    max-height: 260px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 14px;
+  }
+
+  .modal-question{
+    font-family:'Baloo 2', sans-serif;
+    font-size: 17px;
+    color: var(--forest-dark);
+    text-align:center;
+    margin-bottom: 4px;
+  }
+
+  .modal-task-name{
+    color: var(--amber-dark);
+  }
+
+  .modal-hint{
+    text-align:center;
+    font-size:13px;
+    color:#8a8a8a;
+    margin-bottom:18px;
+  }
+
+  .modal-actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HOME -->
+  <section class="screen active" id="screen-home">
+    <div class="home-hero">
+      <div class="badge-row">🧭🍃🔎</div>
+      <h1>Tropiciele: podchody w plenerze</h1>
+      <p>Weź telefon, wyjdź na dwór i znajdź 10 sekretnych rzeczy w swojej okolicy. Za każdą — zdjęcie na dowód!</p>
+      <div class="stat-strip">
+        <div class="stat-chip"><span class="num">10</span><span class="lbl">zadań do znalezienia</span></div>
+        <div class="stat-chip"><span class="num">~20</span><span class="lbl">minut zabawy</span></div>
+        <div class="stat-chip"><span class="num">1</span><span class="lbl">odkrywca</span></div>
+      </div>
+    </div>
+
+    <div class="rules">
+      <h3>Jak grać</h3>
+      <ol>
+        <li>Rozejrzyj się dookoła — podwórko, park albo ogród w zupełności wystarczą.</li>
+        <li>Przy każdym zadaniu naciśnij 📸 i zrób zdjęcie znalezionej rzeczy.</li>
+        <li>Zbierz wszystkie 10 zdjęć, żeby zostać Mistrzem Tropicieli!</li>
+      </ol>
+    </div>
+
+    <div class="cta-wrap">
+      <button class="btn btn-primary" onclick="startGame()">🚀 Zacznij podchody</button>
+      <button class="btn btn-ghost" onclick="reshuffleAndStart()">🔀 Wylosuj nową listę</button>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section class="screen" id="screen-game">
+    <div class="topbar">
+      <h2 style="font-size:19px; color:var(--forest);">Twoje tropy</h2>
+      <div class="timer" id="timer">00:00</div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="progress-text">0 / 10 znalezione</span>
+        <span id="progress-percent">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="task-list" id="task-list"></div>
+
+    <div class="finish-bar">
+      <button class="btn btn-ghost" onclick="goHome(true)">⏸ Przerwij grę</button>
+    </div>
+  </section>
+
+  <!-- COMPLETE -->
+  <section class="screen" id="screen-complete">
+    <div class="complete-hero">
+      <div class="big-emoji">🏆</div>
+      <h2>Jesteś Mistrzem Tropicieli!</h2>
+      <p id="complete-sub">Znalazłeś wszystkie 10 rzeczy.</p>
+    </div>
+
+    <div class="summary-stats">
+      <div class="stat-chip"><span class="num" id="final-time">00:00</span><span class="lbl">czas gry</span></div>
+      <div class="stat-chip"><span class="num">10/10</span><span class="lbl">znalezionych tropów</span></div>
+    </div>
+
+    <div class="summary-grid" id="summary-grid"></div>
+
+    <div class="cta-wrap">
+      <button class="btn btn-primary" onclick="reshuffleAndStart()">🔁 Zagraj jeszcze raz</button>
+      <button class="btn btn-ghost" onclick="goHome(false)">🏠 Wróć do startu</button>
+    </div>
+  </section>
+
+</div>
+
+<input type="file" accept="image/*" capture="environment" id="camera-input">
+
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-card">
+    <img class="modal-photo" id="modal-photo" src="" alt="Twoje zdjęcie">
+    <div class="modal-question">Czy to na pewno: <span class="modal-task-name" id="modal-task-name"></span>?</div>
+    <div class="modal-hint">Sprawdź uważnie zdjęcie, zanim potwierdzisz.</div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="confirmPhoto(true)">✅ Tak, to jest to!</button>
+      <button class="btn btn-ghost" onclick="confirmPhoto(false)">🔄 Nie, spróbuję jeszcze raz</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const POOL = [
+    { text: "Liść w kształcie serca", emoji: "🍃" },
+    { text: "Coś okrągłego jak piłka", emoji: "🔵" },
+    { text: "Kwiat w dowolnym kolorze", emoji: "🌼" },
+    { text: "Patyk przypominający literę", emoji: "🪵" },
+    { text: "Kamień, który mieści się w dłoni", emoji: "🪨" },
+    { text: "Coś, co wydaje dźwięk, gdy w to stukniesz", emoji: "🥁" },
+    { text: "Chmura, która przypomina zwierzę", emoji: "☁️" },
+    { text: "Owad albo ślad po nim", emoji: "🐜" },
+    { text: "Coś w kolorze pomarańczowym", emoji: "🟠" },
+    { text: "Piórko ptaka", emoji: "🪶" },
+    { text: "Coś bardzo miękkiego w dotyku", emoji: "🧸" },
+    { text: "Cień w ciekawym kształcie", emoji: "🌗" },
+    { text: "Coś, co pływa po wodzie", emoji: "💧" },
+    { text: "Szyszka albo żołądź", emoji: "🌰" },
+    { text: "Coś w kropki", emoji: "🔘" },
+    { text: "Trawa albo mech z bliska", emoji: "🌿" },
+  ];
+
+  let tasks = [];
+  let activeTaskIndex = null;
+  let timerInterval = null;
+  let secondsElapsed = 0;
+
+  function shuffle(arr){
+    const a = [...arr];
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i+1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function buildTasks(){
+    return shuffle(POOL).slice(0, 10).map((t, i) => ({
+      id: i,
+      text: t.text,
+      emoji: t.emoji,
+      done: false,
+      photoUrl: null
+    }));
+  }
+
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function startGame(){
+    if(tasks.length === 0) tasks = buildTasks();
+    renderTasks();
+    updateProgress();
+    startTimer();
+    showScreen('screen-game');
+  }
+
+  function reshuffleAndStart(){
+    tasks = buildTasks();
+    renderTasks();
+    updateProgress();
+    startTimer();
+    showScreen('screen-game');
+  }
+
+  function goHome(keepProgress){
+    stopTimer();
+    if(!keepProgress){ tasks = []; secondsElapsed = 0; }
+    showScreen('screen-home');
+  }
+
+  function startTimer(){
+    stopTimer();
+    secondsElapsed = 0;
+    updateTimerLabel();
+    timerInterval = setInterval(() => {
+      secondsElapsed++;
+      updateTimerLabel();
+    }, 1000);
+  }
+
+  function stopTimer(){
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  function formatTime(s){
+    const m = Math.floor(s/60).toString().padStart(2,'0');
+    const sec = (s%60).toString().padStart(2,'0');
+    return m + ":" + sec;
+  }
+
+  function updateTimerLabel(){
+    document.getElementById('timer').textContent = formatTime(secondsElapsed);
+  }
+
+  function renderTasks(){
+    const list = document.getElementById('task-list');
+    list.innerHTML = '';
+    tasks.forEach(task => {
+      const el = document.createElement('div');
+      el.className = 'task' + (task.done ? ' done' : '');
+      el.innerHTML = `
+        <div class="task-emoji">${task.emoji}</div>
+        <div class="task-body">
+          <div class="task-text">${task.text}</div>
+          <div class="task-sub">${task.done ? 'Znalezione! ✅' : 'Nieodkryte jeszcze'}</div>
+        </div>
+        <div class="task-action">
+          ${task.done
+            ? `<div class="thumb-wrap"><img src="${task.photoUrl}"><div class="thumb-check">✔️</div></div>`
+            : `<button class="snap-btn" onclick="triggerCamera(${task.id})">📸</button>`
+          }
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  }
+
+  function triggerCamera(taskId){
+    activeTaskIndex = taskId;
+    document.getElementById('camera-input').click();
+  }
+
+  let pendingPhotoUrl = null;
+
+  function speakText(text){
+    if(!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'pl-PL';
+    utter.rate = 0.95;
+    window.speechSynthesis.speak(utter);
+  }
+
+  document.getElementById('camera-input').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file || activeTaskIndex === null) return;
+    pendingPhotoUrl = URL.createObjectURL(file);
+    const task = tasks.find(t => t.id === activeTaskIndex);
+    document.getElementById('modal-photo').src = pendingPhotoUrl;
+    document.getElementById('modal-task-name').textContent = task.text;
+    document.getElementById('confirm-modal').classList.add('active');
+    speakText(`Czy to na pewno: ${task.text}?`);
+    e.target.value = '';
+  });
+
+  function confirmPhoto(isCorrect){
+    document.getElementById('confirm-modal').classList.remove('active');
+
+    if(!isCorrect){
+      // Odrzucone zdjęcie — nie zapisujemy go, dziecko może spróbować jeszcze raz.
+      URL.revokeObjectURL(pendingPhotoUrl);
+      pendingPhotoUrl = null;
+      activeTaskIndex = null;
+      return;
+    }
+
+    const task = tasks.find(t => t.id === activeTaskIndex);
+    task.done = true;
+    task.photoUrl = pendingPhotoUrl;
+    pendingPhotoUrl = null;
+    activeTaskIndex = null;
+
+    renderTasks();
+    updateProgress();
+    burstConfetti();
+
+    if(tasks.every(t => t.done)){
+      setTimeout(showComplete, 500);
+    }
+  }
+
+  function updateProgress(){
+    const done = tasks.filter(t => t.done).length;
+    const total = tasks.length;
+    const pct = total ? Math.round((done/total)*100) : 0;
+    document.getElementById('progress-text').textContent = `${done} / ${total} znalezione`;
+    document.getElementById('progress-percent').textContent = pct + '%';
+    document.getElementById('progress-fill').style.width = pct + '%';
+  }
+
+  function showComplete(){
+    stopTimer();
+    document.getElementById('final-time').textContent = formatTime(secondsElapsed);
+    const grid = document.getElementById('summary-grid');
+    grid.innerHTML = '';
+    tasks.forEach(t => {
+      const img = document.createElement('img');
+      img.src = t.photoUrl;
+      grid.appendChild(img);
+    });
+    showScreen('screen-complete');
+  }
+
+  function burstConfetti(){
+    const colors = ['#F2A93B', '#2F5233', '#5FA8A3', '#D98F1F'];
+    for(let i=0; i<18; i++){
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random()*100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+      piece.style.animationDuration = (1.4 + Math.random()*1.2) + 's';
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 3000);
+    }
+  }
+</script>
+</body>
+</html>
